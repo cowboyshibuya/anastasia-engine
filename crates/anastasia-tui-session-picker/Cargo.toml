@@ -1,0 +1,15 @@
+[package]
+name = "anastasia-tui-session-picker"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+anastasia-message-types = { path = "../anastasia-message-types" }
+anastasia-session-types = { path = "../anastasia-session-types" }
+serde = { version = "1", features = ["derive"], optional = true }
+
+[features]
+default = []
+serde = ["dep:serde"]

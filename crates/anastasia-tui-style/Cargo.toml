@@ -1,0 +1,9 @@
+[package]
+name = "anastasia-tui-style"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+anastasia-logging = { path = "../anastasia-logging" }
+ratatui = "0.30"

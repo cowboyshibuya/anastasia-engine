@@ -1,0 +1,21 @@
+[package]
+name = "anastasia-protocol"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+anastasia-batch-types = { path = "../anastasia-batch-types" }
+anastasia-config-types = { path = "../anastasia-config-types" }
+anastasia-message-types = { path = "../anastasia-message-types" }
+anastasia-plan = { path = "../anastasia-plan" }
+anastasia-provider-core = { path = "../anastasia-provider-core" }
+anastasia-selfdev-types = { path = "../anastasia-selfdev-types" }
+anastasia-session-types = { path = "../anastasia-session-types" }
+anastasia-side-panel-types = { path = "../anastasia-side-panel-types" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[dev-dependencies]
+anyhow = "1"
+rand = "0.9"

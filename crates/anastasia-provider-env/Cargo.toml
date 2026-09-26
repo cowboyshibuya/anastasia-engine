@@ -1,0 +1,18 @@
+[package]
+name = "anastasia-provider-env"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "anastasia_provider_env"
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = "1"
+anastasia-core = { path = "../anastasia-core" }
+anastasia-logging = { path = "../anastasia-logging" }
+anastasia-provider-metadata = { path = "../anastasia-provider-metadata" }
+anastasia-storage = { path = "../anastasia-storage" }
+
+[dev-dependencies]
+tempfile = "3"

@@ -1,0 +1,22 @@
+{
+  "total": 17,
+  "files": {
+    "crates/anastasia-app-core/src/lib.rs": 1,
+    "crates/anastasia-app-core/src/setup_hints.rs": 1,
+    "crates/anastasia-base/src/env.rs": 1,
+    "crates/anastasia-base/src/id.rs": 1,
+    "crates/anastasia-base/src/lib.rs": 1,
+    "crates/anastasia-base/src/logging.rs": 1,
+    "crates/anastasia-base/src/memory_types.rs": 1,
+    "crates/anastasia-base/src/plan.rs": 1,
+    "crates/anastasia-base/src/protocol.rs": 1,
+    "crates/anastasia-base/src/provider_catalog.rs": 1,
+    "crates/anastasia-base/src/stdin_detect.rs": 1,
+    "crates/anastasia-base/src/storage.rs": 1,
+    "crates/anastasia-base/src/transport/mod.rs": 1,
+    "crates/anastasia-base/src/util.rs": 1,
+    "crates/anastasia-tui/src/lib.rs": 1,
+    "crates/anastasia-tui/src/tui/mod.rs": 1,
+    "src/lib.rs": 1
+  }
+}

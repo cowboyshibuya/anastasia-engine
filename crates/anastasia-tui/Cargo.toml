@@ -1,0 +1,117 @@
+[package]
+name = "anastasia-tui"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Presentation layer for anastasia: the terminal UI (`tui`) and the offline replay
+# `video_export`, extracted out of the monolithic root `anastasia` crate so they
+# compile as a separate rustc unit. This crate builds on top of the application
+# core (`anastasia-app-core`) and re-exports it via `pub use anastasia_app_core::*`, so
+# every existing `crate::<module>` path (e.g. `crate::config`, `crate::server`)
+# keeps resolving unchanged across the tui code that was moved here. The root
+# `anastasia` crate (cli + bin) in turn re-exports this crate via
+# `pub use anastasia_tui::*`.
+
+[lib]
+name = "anastasia_tui"
+path = "src/lib.rs"
+
+[dependencies]
+# Application core (server, agent, provider, auth, session, tool, config, ...).
+# Re-exported via `pub use anastasia_app_core::*` in lib.rs. default-features=false
+# so this crate (and ultimately the root crate) controls app-core's features.
+anastasia-app-core = { path = "../anastasia-app-core", default-features = false }
+
+# Pure math kernels for the idle animations (3D samplers, glyph chooser,
+# HSV->RGB). Pinned to opt-level = 3 in all profiles via workspace Cargo.toml so
+# the hot trig loops stay optimized even in debug/selfdev builds.
+anastasia-tui-anim = { path = "../anastasia-tui-anim" }
+
+# Async runtime
+tokio = { version = "1", features = ["fs", "io-std", "io-util", "macros", "net", "process", "rt-multi-thread", "signal", "sync", "time"] }
+futures = "0.3"
+async-trait = "0.1"
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["raw_value"] }
+
+# Utilities
+anyhow = "1"
+libc = "0.2"
+chrono = { version = "0.4", features = ["serde"] }
+regex = "1"
+dirs = "5"
+similar = "2"
+tempfile = "3"
+open = "5"
+
+# OAuth / hashing helpers used by the login + account UI
+base64 = "0.22"
+sha2 = "0.10"
+rand = "0.9.3"
+hex = "0.4"
+url = "2"
+urlencoding = "2"
+
+# TUI
+ratatui = "0.30"
+crossterm = { version = "0.29", features = ["event-stream"] }
+arboard = "3"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+resvg = "0.46"
+usvg = "0.46"
+unicode-width = "0.2"
+
+# Presentation-layer workspace crates
+anastasia-build-meta = { path = "../anastasia-build-meta" }
+anastasia-logging = { path = "../anastasia-logging" }
+anastasia-core = { path = "../anastasia-core" }
+anastasia-fuzzy = { path = "../anastasia-fuzzy" }
+anastasia-config-types = { path = "../anastasia-config-types" }
+anastasia-selfdev-types = { path = "../anastasia-selfdev-types" }
+anastasia-session-types = { path = "../anastasia-session-types" }
+anastasia-provider-core = { path = "../anastasia-provider-core" }
+anastasia-tui-markdown = { path = "../anastasia-tui-markdown" }
+anastasia-tui-messages = { path = "../anastasia-tui-messages" }
+anastasia-tui-core = { path = "../anastasia-tui-core" }
+anastasia-tui-mermaid = { path = "../anastasia-tui-mermaid" }
+anastasia-tui-account-picker = { path = "../anastasia-tui-account-picker" }
+anastasia-tui-render = { path = "../anastasia-tui-render" }
+anastasia-tui-visual-debug = { path = "../anastasia-tui-visual-debug" }
+anastasia-tui-session-picker = { path = "../anastasia-tui-session-picker", features = ["serde"] }
+anastasia-tui-style = { path = "../anastasia-tui-style" }
+terminal-colorsaurus = "1.0"
+anastasia-tui-permissions = { path = "../anastasia-tui-permissions" }
+anastasia-tui-tool-display = { path = "../anastasia-tui-tool-display" }
+anastasia-tui-usage-overlay = { path = "../anastasia-tui-usage-overlay" }
+anastasia-terminal-image = { path = "../anastasia-terminal-image" }
+anastasia-productivity-core = { path = "../anastasia-productivity-core" }
+anastasia-tui-workspace = { path = "../anastasia-tui-workspace" }
+
+[features]
+default = ["pdf", "embeddings", "bedrock"]
+# Exposes bench-only debug helpers (e.g. debug_copy_selection_text_for_bench)
+# consumed by the dev `tui_bench` binary in the root crate.
+dev-bins = []
+# Forwarded to app-core (and onward to anastasia-base) so the root crate's feature
+# set fully controls the optional stacks.
+jemalloc = ["anastasia-app-core/jemalloc"]
+jemalloc-prof = ["anastasia-app-core/jemalloc-prof"]
+embeddings = ["anastasia-app-core/embeddings"]
+pdf = ["anastasia-app-core/pdf"]
+bedrock = ["anastasia-app-core/bedrock"]
+linux-compat-vendored-openssl = ["anastasia-app-core/linux-compat-vendored-openssl"]
+mmdr-size-api = ["anastasia-tui-mermaid/mmdr-size-api"]
+# Forwards the application core's `test-support` feature (and onward to
+# anastasia-base) so downstream crates' test targets can reach the whole stack's
+# test helpers. Never enabled in normal (non-test) builds.
+test-support = ["anastasia-app-core/test-support"]
+
+[dev-dependencies]
+# Enables the downstream test-support helpers for *this* crate's own test
+# target. Feature unification applies this only to test/bench/example builds.
+anastasia-app-core = { path = "../anastasia-app-core", default-features = false, features = ["test-support"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]

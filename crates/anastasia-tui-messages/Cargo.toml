@@ -1,0 +1,13 @@
+[package]
+name = "anastasia-tui-messages"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+anastasia-config-types = { path = "../anastasia-config-types" }
+anastasia-message-types = { path = "../anastasia-message-types" }
+anastasia-session-types = { path = "../anastasia-session-types" }
+anastasia-tui-markdown = { path = "../anastasia-tui-markdown" }
+ratatui = "0.30"
+serde_json = "1"

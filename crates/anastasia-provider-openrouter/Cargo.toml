@@ -1,0 +1,17 @@
+[package]
+name = "anastasia-provider-openrouter"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anastasia-schema-dialect = { path = "../anastasia-schema-dialect" }
+dirs = "5"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+anyhow = "1"
+bytes = "1"
+futures = "0.3"
+anastasia-core = { path = "../anastasia-core" }
+anastasia-logging = { path = "../anastasia-logging" }
+anastasia-message-types = { path = "../anastasia-message-types" }
+reqwest = { version = "0.12", default-features = false, features = ["stream"] }

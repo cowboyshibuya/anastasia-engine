@@ -1,0 +1,17 @@
+[package]
+name = "anastasia-tool-core"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "anastasia_tool_core"
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = "1"
+async-trait = "0.1"
+anastasia-agent-runtime = { path = "../anastasia-agent-runtime" }
+anastasia-message-types = { path = "../anastasia-message-types" }
+anastasia-tool-types = { path = "../anastasia-tool-types" }
+serde_json = "1"
+tokio = { version = "1", features = ["sync"] }

@@ -1,0 +1,24 @@
+[package]
+name = "anastasia-telemetry-core"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+name = "anastasia_telemetry_core"
+path = "src/lib.rs"
+
+[dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+anastasia-build-meta = { path = "../anastasia-build-meta" }
+anastasia-core = { path = "../anastasia-core" }
+anastasia-logging = { path = "../anastasia-logging" }
+anastasia-selfdev-types = { path = "../anastasia-selfdev-types" }
+anastasia-storage = { path = "../anastasia-storage" }
+anastasia-usage-types = { path = "../anastasia-usage-types" }
+serde_json = "1"
+walkdir = "2"
+uuid = { version = "1", features = ["v4"] }
+
+[dev-dependencies]
+tempfile = "3"

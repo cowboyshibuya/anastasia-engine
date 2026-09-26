@@ -1,0 +1,11 @@
+[package]
+name = "anastasia-session-types"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+anastasia-message-types = { path = "../anastasia-message-types" }
+memchr = "2"
+serde = { version = "1", features = ["derive"] }

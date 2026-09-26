@@ -1,0 +1,27 @@
+use super::*;
+use crate::tui::ui::{
+    FlickerFrameSample, FramePerfStats, SlowFrameSample, clear_flicker_frame_history_for_tests,
+    clear_slow_frame_history_for_tests, copy_badge_reserved_width, expand_badge_reserved_width,
+    pick_copy_badge_line, record_flicker_frame_sample, record_slow_frame_sample,
+    reserve_copy_badge_margins, truncate_copy_badge_line_to_width, truncate_line_for_copy_badge,
+};
+use ratatui::{Terminal, backend::TestBackend};
+
+include!("basic/frame_flicker.rs");
+include!("basic/interaction_links.rs");
+include!("basic/body_cache.rs");
+include!("basic/image_regions.rs");
+include!("basic/input_layout.rs");
+include!("basic/redraw_cadence.rs");
+
+fn render_full(state: &TestState, width: u16, height: u16) -> Terminal<TestBackend> {
+    let mut terminal = Terminal::new(TestBackend::new(width, height)).unwrap();
+    terminal
+        .draw(|frame| crate::tui::ui::draw(frame, state))
+        .unwrap();
+    terminal
+}
+
+fn pin_full_tier() {
+    crate::perf::pin_full_profile_for_tests();
+}

@@ -1,0 +1,9 @@
+[package]
+name = "anastasia-batch-types"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+anastasia-message-types = { path = "../anastasia-message-types" }
+serde = { version = "1", features = ["derive"] }

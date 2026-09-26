@@ -1,0 +1,16 @@
+[Unit]
+Description=anastasia server with WebSocket gateway
+After=network.target
+
+[Service]
+Environment=PATH=/home/ec2-user/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=ANASTASIA_CLI_BEDROCK_ENABLE=1
+Environment=AWS_REGION=us-east-1
+Environment=ANASTASIA_CLI_BEDROCK_MODEL=us.anthropic.claude-opus-4-6-v1
+ExecStartPre=/bin/rm -f /run/user/1000/anastasia-daemon.lock /run/user/1000/anastasia.sock /run/user/1000/anastasia.sock.hash /run/user/1000/anastasia-debug.sock
+ExecStart=/home/ec2-user/.local/bin/anastasia --provider bedrock serve
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

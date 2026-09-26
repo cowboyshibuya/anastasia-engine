@@ -1,0 +1,26 @@
+{
+  "total": 77,
+  "tracked_files": {
+    "crates/anastasia-app-core/src/session_launch.rs": 1,
+    "crates/anastasia-app-core/src/tool/communicate.rs": 1,
+    "crates/anastasia-app-core/src/tool/computer/win.rs": 3,
+    "crates/anastasia-base/src/auth/oauth.rs": 3,
+    "crates/anastasia-base/src/hooks.rs": 1,
+    "crates/anastasia-harness-api-server/src/translate.rs": 2,
+    "crates/anastasia-harness-api/examples/harness_repl.rs": 15,
+    "crates/anastasia-plan/src/dag/ops.rs": 1,
+    "crates/anastasia-provider-anthropic/src/wedge_fixture_check.rs": 3,
+    "crates/anastasia-provider-doctor/src/lifecycle_driver.rs": 2,
+    "crates/anastasia-render-core/src/math.rs": 4,
+    "crates/anastasia-render-core/src/preprocess.rs": 2,
+    "crates/anastasia-sdk/src/structured.rs": 1,
+    "crates/anastasia-telemetry-core/src/lib.rs": 2,
+    "crates/anastasia-terminal-launch/src/lib.rs": 1,
+    "crates/anastasia-tui-core/src/stream_buffer.rs": 3,
+    "crates/anastasia-tui-style/examples/light_bench.rs": 1,
+    "crates/anastasia-tui/src/tui/session_picker.rs": 2,
+    "src/bin/memory_recall_bench.rs": 14,
+    "src/cli/commands/menubar.rs": 1
+  },
+  "version": 1
+}

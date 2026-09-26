@@ -1,0 +1,29 @@
+[package]
+name = "anastasia-setup-hints"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+name = "anastasia_setup_hints"
+path = "src/lib.rs"
+
+[dependencies]
+anyhow = "1"
+dirs = "5"
+anastasia-build-meta = { path = "../anastasia-build-meta" }
+anastasia-config-types = { path = "../anastasia-config-types" }
+anastasia-core = { path = "../anastasia-core" }
+anastasia-logging = { path = "../anastasia-logging" }
+anastasia-storage = { path = "../anastasia-storage" }
+anastasia-terminal-launch = { path = "../anastasia-terminal-launch" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System_Threading", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_WindowsAndMessaging"] }
+
+[dev-dependencies]
+tempfile = "3"

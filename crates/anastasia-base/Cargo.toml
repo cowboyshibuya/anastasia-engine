@@ -1,0 +1,155 @@
+[package]
+name = "anastasia-base"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+# Foundational layer of the anastasia application core: the downward-closed set of
+# modules (provider, auth, config, session, message, memory, telemetry, ...)
+# that the server/tool/agent layer depends on. Split out of `anastasia-app-core` so
+# the two halves compile as separate rustc units, halving peak compile memory.
+# `anastasia-app-core` re-exports this crate (`pub use anastasia_base::*`) so that every
+# existing `crate::<module>` path keeps resolving unchanged.
+
+[lib]
+name = "anastasia_base"
+path = "src/lib.rs"
+
+[dependencies]
+# Memory allocator (reduces fragmentation for long-running server)
+tikv-jemalloc-ctl = { version = "0.6", optional = true }
+tikv-jemalloc-sys = { version = "0.6", optional = true }
+
+# Async runtime
+tokio = { version = "1", features = ["fs", "io-std", "io-util", "macros", "net", "process", "rt-multi-thread", "signal", "sync", "time"] }
+futures = "0.3"
+async-trait = "0.1"
+
+# HTTP client
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "blocking", "charset", "http2", "system-proxy", "rustls-tls", "rustls-tls-native-roots"] }
+tokio-tungstenite = { version = "0.24", default-features = false, features = ["connect", "rustls-tls-native-roots"] }
+
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["raw_value"] }
+serde_yaml = "0.9"
+toml = "0.8"
+
+# File operations
+
+# Utilities
+dirs = "5"               # home directory
+anyhow = "1"
+libc = "0.2"             # Unix system calls (flock)
+chrono = { version = "0.4", features = ["serde"] }
+regex = "1"
+rusqlite = { version = "0.32", features = ["bundled"] }
+urlencoding = "2"        # URL encoding for web search
+uuid = { version = "1", features = ["v4", "v5"] }
+proctitle = "0.1"
+
+# Embeddings (local inference) - behind feature flag (163 crates, slow to compile)
+anastasia-embedding = { path = "../anastasia-embedding", optional = true }
+anastasia-gateway-types = { path = "../anastasia-gateway-types" }
+anastasia-import-core = { path = "../anastasia-import-core" }
+anastasia-logging = { path = "../anastasia-logging" }
+
+# OAuth
+base64 = "0.22"
+sha2 = "0.10"
+anastasia-transport = { path = "../anastasia-transport" }
+rand = "0.9.3"
+hex = "0.4"
+url = "2"
+open = "5"               # Open URLs in browser
+anastasia-auth-types = { path = "../anastasia-auth-types" }
+anastasia-azure-auth = { path = "../anastasia-azure-auth" }
+anastasia-agent-runtime = { path = "../anastasia-agent-runtime" }
+anastasia-provider-metadata = { path = "../anastasia-provider-metadata" }
+anastasia-provider-env = { path = "../anastasia-provider-env" }
+anastasia-provider-core = { path = "../anastasia-provider-core" }
+# default-features=false so this crate's `bedrock` feature (below) controls the
+# AWS SDK stack; the pure model-metadata/credential-detection layer is always on.
+anastasia-provider-bedrock = { path = "../anastasia-provider-bedrock", default-features = false }
+anastasia-provider-antigravity = { path = "../anastasia-provider-antigravity" }
+anastasia-provider-copilot = { path = "../anastasia-provider-copilot" }
+anastasia-provider-openai = { path = "../anastasia-provider-openai" }
+anastasia-provider-openrouter = { path = "../anastasia-provider-openrouter" }
+anastasia-provider-gemini = { path = "../anastasia-provider-gemini" }
+# NOTE: this foundation layer intentionally does NOT depend on any `anastasia-tui-*`
+# crate. The two pure-data/string symbols it used to reach for (`ResumeTarget`,
+# `reasoning_line_markup`) were moved to `anastasia-session-types` and
+# `anastasia-render-core` respectively, so the layering inversion (foundation
+# depending on presentation) is gone.
+anastasia-render-core = { path = "../anastasia-render-core" }
+anastasia-terminal-launch = { path = "../anastasia-terminal-launch" }
+anastasia-terminal-image = { path = "../anastasia-terminal-image" }
+anastasia-telemetry-core = { path = "../anastasia-telemetry-core" }
+anastasia-usage-types = { path = "../anastasia-usage-types" }
+
+# Streaming
+
+# Terminal I/O (event stream for interactive auth/secret prompts). NOTE: the
+# heavier presentation deps (ratatui widgets, arboard clipboard) were dropped
+# from this foundation layer; they are unused here and live only in `anastasia-tui`.
+crossterm = { version = "0.29", features = ["event-stream"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }  # Only PNG/JPEG (skip avif/rav1e, exr, gif, tiff, etc)
+
+# NOTE: PDF text extraction (anastasia-pdf) lives in the upper anastasia-app-core crate
+# (tool/read.rs), not here.
+anastasia-background-types = { path = "../anastasia-background-types" }
+anastasia-batch-types = { path = "../anastasia-batch-types" }
+anastasia-build-meta = { path = "../anastasia-build-meta" }
+anastasia-compaction-core = { path = "../anastasia-compaction-core" }
+anastasia-config-types = { path = "../anastasia-config-types" }
+anastasia-core = { path = "../anastasia-core" }
+anastasia-memory-types = { path = "../anastasia-memory-types" }
+anastasia-message-types = { path = "../anastasia-message-types" }
+anastasia-plan = { path = "../anastasia-plan" }
+anastasia-protocol = { path = "../anastasia-protocol" }
+anastasia-session-types = { path = "../anastasia-session-types" }
+anastasia-storage = { path = "../anastasia-storage" }
+anastasia-task-types = { path = "../anastasia-task-types" }
+anastasia-tool-core = { path = "../anastasia-tool-core" }
+anastasia-tool-types = { path = "../anastasia-tool-types" }
+anastasia-side-panel-types = { path = "../anastasia-side-panel-types" }
+
+# Gzip decoding (used by provider import/helpers)
+tempfile = "3"
+qrcode = { version = "0.14.1", default-features = false }
+
+[features]
+default = ["embeddings", "bedrock"]
+# Compiles the in-crate test helpers (storage::lock_test_env,
+# auth::test_sandbox, bus::reset_models_updated_publish_state_for_tests, ...) as
+# `pub` so downstream crates' test targets can reach them. Enabled as a
+# dev-dependency feature by anastasia-app-core / anastasia / etc.; never in normal
+# (non-test) builds.
+test-support = []
+jemalloc = [
+    "dep:tikv-jemalloc-ctl",
+    "dep:tikv-jemalloc-sys",
+    "tikv-jemalloc-ctl/stats",
+]
+jemalloc-prof = [
+    "jemalloc",
+    "tikv-jemalloc-ctl/profiling",
+]
+embeddings = ["dep:anastasia-embedding"]
+# Live AWS Bedrock support (the ~20-crate AWS SDK stack) lives in
+# anastasia-provider-bedrock (aws-sdk); forward there. Without it the Bedrock
+# provider still compiles but live calls return an explanatory error.
+bedrock = ["anastasia-provider-bedrock/aws-sdk"]
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_System_Power", "Win32_System_Threading"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+
+[dev-dependencies]
+# Dev-only cycle (cargo permits dev-dependencies on dependents): base's
+# MultiProvider routing tests exercise the real OpenRouter/OpenAI-compatible
+# runtime through the composition-root registry, exactly like the binary.
+anastasia-provider-openrouter-runtime = { path = "../anastasia-provider-openrouter-runtime" }
+# Paused-time (auto-advancing virtual clock) tests for the background stall watchdog.
+tokio = { version = "1", features = ["test-util"] }

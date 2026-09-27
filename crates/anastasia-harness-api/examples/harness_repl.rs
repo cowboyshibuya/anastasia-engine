@@ -17,6 +17,7 @@ use anastasia_harness_api::{
 };
 use std::io::{BufRead, BufReader, Write};
 
+#[cfg(unix)]
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.first().map(String::as_str) == Some("--demo") {
@@ -32,6 +33,11 @@ fn main() {
         .unwrap_or_else(|e| panic!("connect {socket}: {e}"));
     let reader = BufReader::new(stream.try_clone().expect("clone stream"));
     run_session(HarnessClient::new(reader, stream), &message);
+}
+
+#[cfg(not(unix))]
+fn main() {
+    eprintln!("This example uses Unix sockets; use the harness API client on Windows.");
 }
 
 fn default_socket_path() -> String {
@@ -88,6 +94,7 @@ fn print_event(frame: &ServerFrame) {
 
 /// Scripted in-process server so the client flow can be exercised before the
 /// real server adapter exists.
+#[cfg(unix)]
 fn run_demo() {
     let (client_stream, server_stream) =
         std::os::unix::net::UnixStream::pair().expect("socketpair");

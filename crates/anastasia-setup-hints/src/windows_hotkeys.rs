@@ -6,7 +6,7 @@
 //! --listen-windows-hotkey`). This pure module keeps mapping and legacy script
 //! rendering testable without touching the machine.
 //!
-//! This module is the **pure** layer, mirroring `linux_niri`/`linux_env`:
+//! This module keeps the Windows key mapping testable without a listener:
 //!
 //! * [`hotkey_to_win32`] maps a resolved [`WindowsHotkey`] onto `RegisterHotKey`
 //!   modifier flags plus a virtual-key code. Explicit `win+...` chords use the

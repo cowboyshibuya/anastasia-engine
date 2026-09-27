@@ -491,6 +491,32 @@ fn a_filtered_subscription_only_sees_its_own_session() {
     }
 }
 
+#[test]
+fn filtered_questions_do_not_cross_sessions() {
+    let client = fake_harness(|frame, writer| {
+        if let ApiRequest::Ping = frame.request {
+            reply(frame, ApiEvent::Pong, writer);
+            for session_id in ["other", "mine"] {
+                push(
+                    ApiEvent::QuestionRequest {
+                        session_id: session_id.into(),
+                        request_id: "request-1".into(),
+                        tool_call_id: "tool-1".into(),
+                        questions: vec![],
+                    },
+                    writer,
+                );
+            }
+        }
+    });
+    let stream = client.events(Some("mine"));
+    client.ping().expect("ping");
+    assert!(matches!(
+        stream.next_timeout(Duration::from_secs(5)),
+        Some(ApiEvent::QuestionRequest { session_id, .. }) if session_id == "mine"
+    ));
+}
+
 /// `run` collects one turn: text, reasoning, tool calls, usage. The turn ends
 /// on `turn_done` rather than on the stream closing.
 #[test]

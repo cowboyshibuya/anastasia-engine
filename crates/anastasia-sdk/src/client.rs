@@ -1564,27 +1564,36 @@ fn spawn_reader(inner: Arc<Inner>, mut reader: Box<dyn BufRead + Send>) {
 fn event_session(event: &ApiEvent) -> Option<&str> {
     use ApiEvent::*;
     match event {
-        TextDelta { session_id, .. }
+        QuestionRequest { session_id, .. }
+        | QuestionClosed { session_id, .. }
+        | PlanningState { session_id, .. }
+        | TextDelta { session_id, .. }
         | ReasoningDelta { session_id, .. }
         | ReasoningDone { session_id, .. }
         | ToolStart { session_id, .. }
         | ToolInputDelta { session_id, .. }
         | ToolExec { session_id, .. }
         | ToolDone { session_id, .. }
+        | SidePaneImages { session_id, .. }
         | TokenUsage { session_id, .. }
         | TurnDone { session_id, .. }
         | BackgroundProgress { session_id, .. }
         | MessageAccepted { session_id, .. }
         | PermissionRequest { session_id, .. }
         | SessionStatus { session_id, .. }
+        | WakeRequested { session_id, .. }
         | ModelInfo { session_id, .. }
         | RuntimeInfo { session_id, .. }
         | ConnectionPhase { session_id, .. }
         | Models { session_id, .. }
         | Compacted { session_id, .. }
         | SessionRenamed { session_id, .. }
+        | FileContent { session_id, .. }
+        | Files { session_id, .. }
+        | TextMatches { session_id, .. }
+        | FileStatus { session_id, .. }
         | History { session_id, .. } => Some(session_id.as_str()),
-        Attached { session } => Some(session.session_id.as_str()),
+        Attached { session } | SessionForked { session } => Some(session.session_id.as_str()),
         _ => None,
     }
 }

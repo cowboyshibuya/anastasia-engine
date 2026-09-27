@@ -1031,7 +1031,11 @@ impl Drop for SpawnLockGuard {
 fn try_acquire_spawn_lock(path: &std::path::Path) -> Result<Option<SpawnLockGuard>> {
     use std::fs::OpenOptions;
     use std::os::fd::AsRawFd;
+    use std::os::unix::fs::DirBuilderExt;
 
+    if let Some(parent) = path.parent() {
+        std::fs::DirBuilder::new().recursive(true).mode(0o700).create(parent)?;
+    }
     let file = OpenOptions::new()
         .create(true)
         .write(true)

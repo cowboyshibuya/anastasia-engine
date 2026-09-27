@@ -113,7 +113,7 @@ impl Drop for ReloadTestEnv {
 #[test]
 fn spawn_lock_serializes_shared_server_bootstrap() {
     let temp = tempfile::tempdir().expect("tempdir");
-    let socket_path = temp.path().join("anastasia-cli.sock");
+    let socket_path = temp.path().join("runtime").join("anastasia-cli.sock");
     let lock_path = spawn_lock_path(&socket_path);
 
     let first = try_acquire_spawn_lock(&lock_path)

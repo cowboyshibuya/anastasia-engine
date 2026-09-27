@@ -1678,7 +1678,10 @@ impl BridgeState {
         }
         let home = match std::env::var_os("ANASTASIA_CLI_HOME") {
             Some(home) => std::path::PathBuf::from(home),
-            None => std::path::Path::new(&std::env::var_os("HOME")?).join(".anastasia-cli"),
+            None => std::path::Path::new(
+                &std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE"))?,
+            )
+            .join(".anastasia-cli"),
         };
         Some(home.join("sessions").join(format!("{session_id}.json")))
     }

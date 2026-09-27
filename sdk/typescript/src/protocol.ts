@@ -8,7 +8,7 @@
  */
 
 export const API_VERSION_MAJOR = 1;
-export const API_VERSION_MINOR = 2;
+export const API_VERSION_MINOR = 3;
 
 export type PermissionDecision = "allow" | "allow_always" | "deny";
 
@@ -23,6 +23,10 @@ export interface SessionInfo {
   session_id: string;
   working_dir?: string;
   title?: string;
+  provider?: string;
+  model?: string;
+  planning?: boolean;
+  plan_goal?: string;
   status: string;
   /** Approximate size of the stored transcript, in bytes. */
   transcript_bytes?: number;

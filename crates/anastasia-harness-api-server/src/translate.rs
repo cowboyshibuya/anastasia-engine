@@ -201,6 +201,14 @@ struct PersistedSessionMetadata {
     #[serde(default)]
     todo_title: Option<String>,
     #[serde(default)]
+    provider: Option<String>,
+    #[serde(default)]
+    model: Option<String>,
+    #[serde(default)]
+    planning: bool,
+    #[serde(default)]
+    plan_goal: Option<String>,
+    #[serde(default)]
     saved: bool,
     #[serde(skip)]
     updated_at_ms: Option<i64>,
@@ -230,6 +238,10 @@ struct RecentSessionIndexEntry {
     generated_title: Option<String>,
     custom_title: Option<String>,
     todo_title: Option<String>,
+    provider: Option<String>,
+    model: Option<String>,
+    planning: bool,
+    plan_goal: Option<String>,
     saved: bool,
     updated_at_ms: i64,
     last_active_at_ms: Option<i64>,
@@ -242,6 +254,10 @@ impl From<&RecentSessionIndexEntry> for PersistedSessionMetadata {
             title: entry.generated_title.clone(),
             custom_title: entry.custom_title.clone(),
             todo_title: entry.todo_title.clone(),
+            provider: entry.provider.clone(),
+            model: entry.model.clone(),
+            planning: entry.planning,
+            plan_goal: entry.plan_goal.clone(),
             saved: entry.saved,
             updated_at_ms: Some(entry.updated_at_ms),
             last_active_at_ms: entry.last_active_at_ms,
@@ -650,6 +666,18 @@ impl BridgeState {
                         title: metadata
                             .get(&session_id)
                             .and_then(PersistedSessionMetadata::display_title),
+                        provider: metadata
+                            .get(&session_id)
+                            .and_then(|value| value.provider.clone()),
+                        model: metadata
+                            .get(&session_id)
+                            .and_then(|value| value.model.clone()),
+                        planning: metadata
+                            .get(&session_id)
+                            .is_some_and(|value| value.planning),
+                        plan_goal: metadata
+                            .get(&session_id)
+                            .and_then(|value| value.plan_goal.clone()),
                         status: if self.session_id.as_ref() == Some(&session_id) {
                             "attached".into()
                         } else {
@@ -1048,6 +1076,14 @@ impl BridgeState {
                                 title: metadata
                                     .as_ref()
                                     .and_then(PersistedSessionMetadata::display_title),
+                                provider: metadata
+                                    .as_ref()
+                                    .and_then(|value| value.provider.clone()),
+                                model: metadata.as_ref().and_then(|value| value.model.clone()),
+                                planning: metadata.as_ref().is_some_and(|value| value.planning),
+                                plan_goal: metadata
+                                    .as_ref()
+                                    .and_then(|value| value.plan_goal.clone()),
                                 status: if event["is_processing"].as_bool().unwrap_or(false) {
                                     "processing".into()
                                 } else {
@@ -1213,6 +1249,10 @@ impl BridgeState {
                                         .as_ref()
                                         .and_then(PersistedSessionMetadata::display_title)
                                 }),
+                            provider: metadata.as_ref().and_then(|value| value.provider.clone()),
+                            model: metadata.as_ref().and_then(|value| value.model.clone()),
+                            planning: metadata.as_ref().is_some_and(|value| value.planning),
+                            plan_goal: metadata.as_ref().and_then(|value| value.plan_goal.clone()),
                             status: "idle".into(),
                             archived: false,
                             archived_at_ms: None,
@@ -1719,6 +1759,15 @@ impl BridgeState {
             custom_title: Self::metadata_string(&tail, "custom_title", true)
                 .or_else(|| Self::metadata_string(&head, "custom_title", true)),
             todo_title: None,
+            provider: Self::metadata_string(&tail, "provider_key", true)
+                .or_else(|| Self::metadata_string(&head, "provider_key", true)),
+            model: Self::metadata_string(&tail, "model", true)
+                .or_else(|| Self::metadata_string(&head, "model", true)),
+            planning: Self::metadata_bool(&tail, "planning", true)
+                .or_else(|| Self::metadata_bool(&head, "planning", true))
+                .unwrap_or(false),
+            plan_goal: Self::metadata_string(&tail, "plan_goal", true)
+                .or_else(|| Self::metadata_string(&head, "plan_goal", true)),
             saved: Self::metadata_bool(&tail, "saved", true)
                 .or_else(|| Self::metadata_bool(&head, "saved", false))
                 .unwrap_or(false),
@@ -1819,6 +1868,10 @@ impl BridgeState {
                      generated_title TEXT,
                      custom_title TEXT,
                      todo_title TEXT,
+                     provider TEXT,
+                     model TEXT,
+                     planning INTEGER NOT NULL DEFAULT 0,
+                     plan_goal TEXT,
                      updated_at_ms INTEGER NOT NULL,
                      last_active_at_ms INTEGER,
                      saved INTEGER NOT NULL DEFAULT 0
@@ -1834,9 +1887,21 @@ impl BridgeState {
             "ALTER TABLE recent_sessions ADD COLUMN saved INTEGER NOT NULL DEFAULT 0",
             [],
         );
+        for column in [
+            "provider TEXT",
+            "model TEXT",
+            "planning INTEGER NOT NULL DEFAULT 0",
+            "plan_goal TEXT",
+        ] {
+            let _ = connection.execute(
+                &format!("ALTER TABLE recent_sessions ADD COLUMN {column}"),
+                [],
+            );
+        }
         let Ok(mut statement) = connection.prepare(
             "SELECT session_id, working_dir, generated_title, custom_title,
-                    todo_title, saved, updated_at_ms, last_active_at_ms
+                    todo_title, saved, updated_at_ms, last_active_at_ms,
+                    provider, model, planning, plan_goal
              FROM recent_sessions
              ORDER BY COALESCE(last_active_at_ms, updated_at_ms) DESC
              LIMIT 500",
@@ -1854,6 +1919,10 @@ impl BridgeState {
                     saved: row.get(5)?,
                     updated_at_ms: row.get(6)?,
                     last_active_at_ms: row.get(7)?,
+                    provider: row.get(8)?,
+                    model: row.get(9)?,
+                    planning: row.get(10)?,
+                    plan_goal: row.get(11)?,
                 })
             })
             .and_then(|rows| rows.collect())
@@ -1879,8 +1948,9 @@ impl BridgeState {
             let _ = transaction.execute(
                 "INSERT INTO recent_sessions (
                      session_id, working_dir, generated_title, custom_title,
-                     todo_title, updated_at_ms, last_active_at_ms
-                 ) VALUES (?1, ?2, ?3, ?4, NULL, ?5, ?5)
+                     todo_title, updated_at_ms, last_active_at_ms,
+                     provider, model, planning, plan_goal
+                 ) VALUES (?1, ?2, ?3, ?4, NULL, ?5, ?5, ?6, ?7, ?8, ?9)
                  ON CONFLICT(session_id) DO NOTHING",
                 params![
                     session_id,
@@ -1888,6 +1958,10 @@ impl BridgeState {
                     metadata.title,
                     metadata.custom_title,
                     updated_at_ms,
+                    metadata.provider,
+                    metadata.model,
+                    metadata.planning,
+                    metadata.plan_goal,
                 ],
             );
         }

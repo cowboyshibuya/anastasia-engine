@@ -300,6 +300,15 @@ pub struct SessionInfo {
     /// over the generated or imported title.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub title: Option<String>,
+    /// Persisted provider profile and model for list rows before attachment.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub provider: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub model: Option<String>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub planning: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub plan_goal: Option<String>,
     pub status: String,
     /// Size of the session's stored record, in bytes.
     ///

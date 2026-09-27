@@ -89,7 +89,7 @@ fn persisted_metadata_reads_large_transcripts_from_bounded_windows() {
     }
     write!(
         file,
-        "\"],\"working_dir\":\"/workspace/large\",\"custom_title\":\"Pinned title\"}}"
+        "\"],\"working_dir\":\"/workspace/large\",\"custom_title\":\"Pinned title\",\"provider_key\":\"anthropic\",\"model\":\"claude-sonnet\",\"planning\":true,\"plan_goal\":\"Improve input\"}}"
     )
     .unwrap();
     drop(file);
@@ -99,6 +99,20 @@ fn persisted_metadata_reads_large_transcripts_from_bounded_windows() {
     assert_eq!(metadata.title.as_deref(), Some("Generated title"));
     assert_eq!(metadata.custom_title.as_deref(), Some("Pinned title"));
     assert_eq!(metadata.display_title().as_deref(), Some("Pinned title"));
+    assert_eq!(metadata.provider.as_deref(), Some("anthropic"));
+    assert_eq!(metadata.model.as_deref(), Some("claude-sonnet"));
+    assert!(metadata.planning);
+    assert_eq!(metadata.plan_goal.as_deref(), Some("Improve input"));
+
+    let ApiEvent::Sessions { sessions } = only_reply_event(
+        BridgeState::default().api_request_to_legacy(&json!({"req": "list_sessions", "id": 1})),
+    ) else {
+        panic!("expected sessions");
+    };
+    assert_eq!(sessions[0].provider.as_deref(), Some("anthropic"));
+    assert_eq!(sessions[0].model.as_deref(), Some("claude-sonnet"));
+    assert!(sessions[0].planning);
+    assert_eq!(sessions[0].plan_goal.as_deref(), Some("Improve input"));
 }
 
 fn only_reply_event(outbound: Vec<Outbound>) -> ApiEvent {

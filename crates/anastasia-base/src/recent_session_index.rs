@@ -18,6 +18,10 @@ pub struct RecentSessionMetadata {
     pub generated_title: Option<String>,
     pub custom_title: Option<String>,
     pub todo_title: Option<String>,
+    pub provider: Option<String>,
+    pub model: Option<String>,
+    pub planning: bool,
+    pub plan_goal: Option<String>,
     pub saved: bool,
     pub updated_at_ms: i64,
     pub last_active_at_ms: Option<i64>,
@@ -51,6 +55,10 @@ fn open() -> Result<Connection> {
              generated_title TEXT,
              custom_title TEXT,
              todo_title TEXT,
+             provider TEXT,
+             model TEXT,
+             planning INTEGER NOT NULL DEFAULT 0,
+             plan_goal TEXT,
              updated_at_ms INTEGER NOT NULL,
              last_active_at_ms INTEGER
          );
@@ -63,6 +71,17 @@ fn open() -> Result<Connection> {
         "ALTER TABLE recent_sessions ADD COLUMN saved INTEGER NOT NULL DEFAULT 0",
         [],
     );
+    for column in [
+        "provider TEXT",
+        "model TEXT",
+        "planning INTEGER NOT NULL DEFAULT 0",
+        "plan_goal TEXT",
+    ] {
+        let _ = connection.execute(
+            &format!("ALTER TABLE recent_sessions ADD COLUMN {column}"),
+            [],
+        );
+    }
     Ok(connection)
 }
 
@@ -70,7 +89,8 @@ pub fn recent(limit: usize) -> Result<Vec<RecentSessionMetadata>> {
     let connection = open()?;
     let mut statement = connection.prepare(
         "SELECT session_id, working_dir, generated_title, custom_title,
-                todo_title, saved, updated_at_ms, last_active_at_ms
+                todo_title, saved, updated_at_ms, last_active_at_ms,
+                provider, model, planning, plan_goal
          FROM recent_sessions
          ORDER BY COALESCE(last_active_at_ms, updated_at_ms) DESC
          LIMIT ?1",
@@ -86,6 +106,10 @@ pub fn recent(limit: usize) -> Result<Vec<RecentSessionMetadata>> {
                 saved: row.get(5)?,
                 updated_at_ms: row.get(6)?,
                 last_active_at_ms: row.get(7)?,
+                provider: row.get(8)?,
+                model: row.get(9)?,
+                planning: row.get(10)?,
+                plan_goal: row.get(11)?,
             })
         })?
         .collect::<rusqlite::Result<Vec<_>>>()?;
@@ -100,6 +124,10 @@ pub fn upsert_session(session: &Session) -> Result<()> {
         generated_title: session.title.clone(),
         custom_title: session.custom_title.clone(),
         todo_title: crate::todo::load_session_title(&session.id),
+        provider: session.provider_key.clone(),
+        model: session.model.clone(),
+        planning: session.planning,
+        plan_goal: session.plan_goal.clone(),
         saved: session.saved,
         updated_at_ms: session.updated_at.timestamp_millis(),
         last_active_at_ms: session.last_active_at.map(|time| time.timestamp_millis()),
@@ -110,8 +138,9 @@ pub fn upsert(entry: &RecentSessionMetadata) -> Result<()> {
     open()?.execute(
         "INSERT INTO recent_sessions (
              session_id, working_dir, generated_title, custom_title, todo_title,
-             saved, updated_at_ms, last_active_at_ms
-         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)
+             saved, updated_at_ms, last_active_at_ms,
+             provider, model, planning, plan_goal
+         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
          ON CONFLICT(session_id) DO UPDATE SET
              working_dir = excluded.working_dir,
              generated_title = excluded.generated_title,
@@ -119,7 +148,11 @@ pub fn upsert(entry: &RecentSessionMetadata) -> Result<()> {
              todo_title = excluded.todo_title,
              saved = excluded.saved,
              updated_at_ms = excluded.updated_at_ms,
-             last_active_at_ms = excluded.last_active_at_ms",
+             last_active_at_ms = excluded.last_active_at_ms,
+             provider = excluded.provider,
+             model = excluded.model,
+             planning = excluded.planning,
+             plan_goal = excluded.plan_goal",
         params![
             entry.session_id,
             entry.working_dir,
@@ -129,6 +162,10 @@ pub fn upsert(entry: &RecentSessionMetadata) -> Result<()> {
             entry.saved,
             entry.updated_at_ms,
             entry.last_active_at_ms,
+            entry.provider,
+            entry.model,
+            entry.planning,
+            entry.plan_goal,
         ],
     )?;
     Ok(())
@@ -166,6 +203,10 @@ mod tests {
             generated_title: Some("Generated".into()),
             custom_title: None,
             todo_title: Some("Todo goal".into()),
+            provider: None,
+            model: None,
+            planning: false,
+            plan_goal: None,
             saved: false,
             updated_at_ms: 1,
             last_active_at_ms: None,

@@ -22,6 +22,10 @@ fn session(id: &str) -> SessionInfo {
         session_id: id.to_string(),
         working_dir: None,
         title: Some(format!("Title for {id}")),
+        provider: None,
+        model: None,
+        planning: false,
+        plan_goal: None,
         status: "idle".to_string(),
         transcript_bytes: None,
         saved: false,
@@ -76,6 +80,9 @@ impl UnixHarness {
             while !server_stop.load(Ordering::Acquire) {
                 match listener.accept() {
                     Ok((socket, _)) => {
+                        socket
+                            .set_nonblocking(false)
+                            .expect("blocking client socket");
                         server_clients.fetch_add(1, Ordering::AcqRel);
                         let sessions = Arc::clone(&server_sessions);
                         let clients = Arc::clone(&server_clients);

@@ -67,5 +67,6 @@ pub use structured::{
 pub use anastasia_harness_api as api;
 pub use anastasia_harness_api::{
     ApiEvent, ApiRequest, HistoryMessage, ModelRouteInfo, PermissionDecision, RenderedImage,
-    RenderedImageAnchor, RenderedImageSource, SessionInfo, TextMatch, api_socket_path,
+    RenderedImageAnchor, RenderedImageSource, SessionInfo, TextMatch, UserAnswers, UserQuestion,
+    UserQuestionOption, api_socket_path,
 };

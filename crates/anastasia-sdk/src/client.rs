@@ -15,8 +15,8 @@ use crate::launch::{LaunchOptions, LaunchedInstance, ensure_runtime, launch_inst
 use crate::ssh::{SshConnectOptions, SshProcess, SshTransport};
 use anastasia_harness_api::{
     API_VERSION_MAJOR, ApiEvent, ApiRequest, ClientFrame, HistoryMessage, ModelRouteInfo,
-    PermissionDecision, ServerFrame, SessionInfo, TextMatch, api_socket_path, read_frame,
-    write_frame,
+    PermissionDecision, ServerFrame, SessionInfo, TextMatch, UserAnswers, api_socket_path,
+    read_frame, write_frame,
 };
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Write};
@@ -912,6 +912,58 @@ impl AnastasiaClient {
             session_id: session_id.to_string(),
             request_id: request_id.to_string(),
             decision,
+        })
+        .map(drop)
+    }
+
+    /// Opt in to question events for an attached session.
+    pub fn enable_questions(&self, session_id: &str) -> Result<()> {
+        self.request_ok(ApiRequest::EnableQuestions {
+            session_id: session_id.to_string(),
+        })
+        .map(drop)
+    }
+
+    pub fn respond_to_question(
+        &self,
+        session_id: &str,
+        request_id: &str,
+        answers: UserAnswers,
+    ) -> Result<()> {
+        self.request_ok(ApiRequest::QuestionResponse {
+            session_id: session_id.to_string(),
+            request_id: request_id.to_string(),
+            answers,
+        })
+        .map(drop)
+    }
+
+    pub fn cancel_question(&self, session_id: &str, request_id: &str) -> Result<()> {
+        self.request_ok(ApiRequest::QuestionCancel {
+            session_id: session_id.to_string(),
+            request_id: request_id.to_string(),
+        })
+        .map(drop)
+    }
+
+    pub fn set_planning(
+        &self,
+        session_id: &str,
+        planning: bool,
+        goal: Option<String>,
+    ) -> Result<()> {
+        self.request_ok(ApiRequest::SetPlanning {
+            session_id: session_id.to_string(),
+            planning,
+            goal,
+        })
+        .map(drop)
+    }
+
+    pub fn set_permissions(&self, session_id: &str, level: &str) -> Result<()> {
+        self.request_ok(ApiRequest::SetPermissions {
+            session_id: session_id.to_string(),
+            level: level.to_string(),
         })
         .map(drop)
     }

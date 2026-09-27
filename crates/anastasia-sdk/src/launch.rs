@@ -78,7 +78,7 @@ pub struct LaunchOptions {
     pub inherit_logins: bool,
     /// anastasia executable. Defaults to `anastasia` on `$PATH`.
     pub binary: Option<PathBuf>,
-    /// Extra environment variables for the private instance.
+    /// Extra environment variables for private instances and shared-runtime startup.
     pub env: HashMap<OsString, OsString>,
     /// Default model for spawned swarm workers, unless overridden per spawn.
     /// `inherit` defaults to the coordinator's model and auth route.
@@ -520,7 +520,7 @@ pub fn ensure_runtime(options: &LaunchOptions, progress: &Progress<'_>) -> Resul
         .unwrap_or_else(|| sibling_exe("anastasia"));
     if !socket_accepts(&legacy) {
         progress("starting anastasia runtime...");
-        spawn_detached(&anastasia, &["serve"]).map_err(|error| {
+        spawn_detached(&anastasia, &["serve"], &options.env).map_err(|error| {
             Error::new(
                 ErrorKind::LaunchFailed,
                 format!("could not start the anastasia runtime: {error}"),
@@ -538,7 +538,7 @@ pub fn ensure_runtime(options: &LaunchOptions, progress: &Progress<'_>) -> Resul
         // standalone lookup above for compatibility with older installations.
         (&anastasia, &["api-bridge"])
     };
-    spawn_detached(bridge, bridge_args).map_err(|error| {
+    spawn_detached(bridge, bridge_args, &options.env).map_err(|error| {
         Error::new(
             ErrorKind::LaunchFailed,
             format!("could not start the harness API bridge: {error}"),
@@ -547,9 +547,14 @@ pub fn ensure_runtime(options: &LaunchOptions, progress: &Progress<'_>) -> Resul
     wait_for_socket(&api, "harness API bridge", options.start_timeout)
 }
 
-fn spawn_detached(program: &Path, args: &[&str]) -> std::io::Result<()> {
+fn spawn_detached(
+    program: &Path,
+    args: &[&str],
+    env: &HashMap<OsString, OsString>,
+) -> std::io::Result<()> {
     Command::new(program)
         .args(args)
+        .envs(env)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
@@ -752,6 +757,34 @@ fn launch_io(error: std::io::Error) -> Error {
 #[cfg(all(test, unix))]
 mod tests {
     use super::*;
+
+    #[test]
+    fn detached_runtime_receives_launch_environment() {
+        let sandbox = tempfile::tempdir().unwrap();
+        let output = sandbox.path().join("env.txt");
+        let script = sandbox.path().join("capture-env");
+        fs::write(&script, "#!/bin/sh\nprintf '%s' \"$ANASTASIA_CLI_DEFERRED_AUTH_BOOTSTRAP\" > \"$CAPTURE_PATH\"\n").unwrap();
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&script, fs::Permissions::from_mode(0o700)).unwrap();
+        let env = HashMap::from([
+            (
+                OsString::from("ANASTASIA_CLI_DEFERRED_AUTH_BOOTSTRAP"),
+                OsString::from("1"),
+            ),
+            (
+                OsString::from("CAPTURE_PATH"),
+                output.as_os_str().to_owned(),
+            ),
+        ]);
+        spawn_detached(&script, &[], &env).unwrap();
+        for _ in 0..100 {
+            if fs::read_to_string(&output).is_ok_and(|value| value == "1") {
+                return;
+            }
+            std::thread::sleep(Duration::from_millis(2));
+        }
+        panic!("detached runtime did not receive launch environment");
+    }
 
     #[cfg(unix)]
     #[test]

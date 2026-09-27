@@ -3,7 +3,8 @@
 
 use crate::background_progress::parse_background_notification;
 use anastasia_harness_api::{
-    ApiEvent, ErrorCode, HistoryMessage, ModelRouteInfo, ServerFrame, SessionInfo, TextMatch,
+    ApiEvent, ErrorCode, HistoryMessage, HistoryToolCall, ModelRouteInfo, ServerFrame, SessionInfo,
+    TextMatch,
 };
 use rusqlite::{Connection, params};
 use serde::Deserialize;
@@ -1329,6 +1330,11 @@ impl BridgeState {
                             .map(|m| HistoryMessage {
                                 role: m["role"].as_str().unwrap_or("").to_string(),
                                 content: m["content"].as_str().unwrap_or("").to_string(),
+                                tool_calls: serde_json::from_value(m["tool_calls"].clone()).ok(),
+                                tool_data: serde_json::from_value::<HistoryToolCall>(
+                                    m["tool_data"].clone(),
+                                )
+                                .ok(),
                             })
                             .collect()
                     })
@@ -2595,6 +2601,8 @@ impl BridgeState {
                 (!content.trim().is_empty()).then(|| HistoryMessage {
                     role: role.to_string(),
                     content,
+                    tool_calls: None,
+                    tool_data: None,
                 })
             })
             .take(limit)

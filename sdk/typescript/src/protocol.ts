@@ -8,7 +8,7 @@
  */
 
 export const API_VERSION_MAJOR = 1;
-export const API_VERSION_MINOR = 3;
+export const API_VERSION_MINOR = 4;
 
 export type PermissionDecision = "allow" | "allow_always" | "deny";
 
@@ -50,9 +50,18 @@ export interface TextMatch {
 }
 
 export interface HistoryMessage {
-  /** "user" | "assistant" | "tool" */
+  /** Rendered role, such as "user", "assistant", "tool", or "system". */
   role: string;
   content: string;
+  tool_calls?: string[];
+  tool_data?: HistoryToolCall;
+}
+
+export interface HistoryToolCall {
+  id: string;
+  name: string;
+  input: unknown;
+  intent?: string;
 }
 
 export type RenderedImageSource =

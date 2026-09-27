@@ -552,12 +552,25 @@ fn history_reply_is_mapped() {
         "type": "history",
         "id": legacy_id,
         "session_id": "s1",
-        "messages": [{"role": "user", "content": "hi"}],
+        "messages": [
+            {"role": "user", "content": "hi"},
+            {"role": "tool", "content": "done", "tool_calls": ["apply_patch"],
+             "tool_data": {"id": "call-1", "name": "apply_patch", "input": {"path": "src/main.rs"}, "intent": "edit"}}
+        ],
     }));
     match &frames[0].event {
         ApiEvent::History { messages, .. } => {
-            assert_eq!(messages.len(), 1);
+            assert_eq!(messages.len(), 2);
             assert_eq!(messages[0].role, "user");
+            assert_eq!(
+                messages[1].tool_calls.as_deref(),
+                Some(["apply_patch".into()].as_slice())
+            );
+            let tool = messages[1].tool_data.as_ref().expect("tool data");
+            assert_eq!(tool.id, "call-1");
+            assert_eq!(tool.name, "apply_patch");
+            assert_eq!(tool.input["path"], "src/main.rs");
+            assert_eq!(tool.intent.as_deref(), Some("edit"));
         }
         other => panic!("unexpected: {other:?}"),
     }

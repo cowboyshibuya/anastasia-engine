@@ -355,9 +355,25 @@ pub struct TextMatch {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct HistoryMessage {
-    /// "user" | "assistant" | "tool".
+    /// Rendered role, such as "user", "assistant", "tool", or "system".
     pub role: String,
     pub content: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool_calls: Option<Vec<String>>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tool_data: Option<HistoryToolCall>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct HistoryToolCall {
+    #[serde(default)]
+    pub id: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub input: serde_json::Value,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub intent: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
